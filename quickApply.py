@@ -11,7 +11,7 @@ email = input('Enter email    | ')
 password = getpass.getpass('Enter password | ')
 job = input('Job keywords   | ')
 location = input('Job location   | ')
-phone_num = input('Phone number   |')
+phone_num = input('Phone number   | ')
 n_pages = int(input('Page limit     | '))
 
 #STEP 1: Login 
@@ -53,10 +53,10 @@ while True:
 		break
 	try:
 		count += 1
-		time.sleep(2)
+		time.sleep(4)
 		for _ in range(20):
 			driver.execute_script("window.scrollBy(0, 300);") #This has to be done to execute the javascript and show the links hidden.
-		time.sleep(1)
+		time.sleep(2)
 		soup = BeautifulSoup(driver.page_source, 'lxml')
 		lst = soup.find('div', {'class':'jobs-search-results'}).find('ul').find_all('div', {'class':'occludable-update card-list__item job-card job-card--column ember-view'})
 
@@ -73,9 +73,7 @@ while True:
 		element.click()
 	except Exception:
 		break
-with open('links.txt', 'a') as f:
-	for link in links:
-		f.write(link+'\n')
+
 print('\nYou have applied to {} total jobs.\n'.format(len(oldLinks)))
 print('\nYou have {} new jobs to apply.\n'.format(len(links)))
 
@@ -85,6 +83,15 @@ for link in links:
 	try:
 		driver.get(link)		
 		time.sleep(1)
+		soup = BeautifulSoup(driver.page_source, 'lxml')
+		applied = soup.find('li-icon', {'type':'success-pebble-icon'})
+		if applied:
+			with open('links.txt', 'a') as f:
+				f.write(link+'\n')	
+			time.sleep(1)
+			job_count += 1
+			print(('APPLIED ALREADY {} | {}').format(job_count, str(len(links))))
+			continue
 		element = driver.find_element_by_css_selector('button.jobs-s-apply__button.js-apply-button')
 		element.click()
 		time.sleep(1)
@@ -94,10 +101,19 @@ for link in links:
 		time.sleep(5)
 		element = driver.find_element_by_css_selector('button.jobs-apply-form__submit-button.button-primary-large')
 		element.click()
-		time.sleep(1)
 		job_count += 1
-		print('JOB APPLICATIONS: ', job_count)
+		time.sleep(1)
+		soup = BeautifulSoup(driver.page_source, 'lxml')
+		success = soup.find('div', {'class':'jobs-post-apply__success-icon'})
+		if success:
+			with open('links.txt', 'a') as f:
+				f.write(link+'\n')	
+			print(('SUCCESS         {} | {}').format(job_count, str(len(links))))
+		else:
+			print(('FAILURE         {} | {}').format(job_count, str(len(links))))
 	except Exception:
+		job_count += 1
+		print(('FAILURE         {} | {}').format(job_count, str(len(links))))
 		continue
 
 driver.close()
